@@ -12,6 +12,9 @@
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <title>Rohis AL Hidayah</title>
   </head>
   <body>
@@ -353,11 +356,113 @@
           </div>
         </div>
       </div>
+
+      <div class="container my-5">
+    <h1 class="mb-4" style="color: azure;">Komentar</h1>
+    <div class="mb-3" style="color: #fff;">
+      <span id="comment">0</span> komentar
+    </div>
+
+    <div class="comments mb-4"></div>
+
+    <div class="card p-3">
+      <div class="d-flex align-items-center mb-3">
+        <img src="pp kosong.jpeg" alt="Profile Pic" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;" />
+        <input type="text" class="form-control" placeholder="Your name (or nonymous)" value="Nama" id="username" />
+      </div>
+      <div class="mb-3">
+        <input type="text" class="form-control" placeholder="Masukan Komen" id="usercomment" />
+      </div>
+      <button class="btn btn-success"  id="publish" disabled>kirim</button>
+    </div>
+  </div>
+
       <div class="footer__bar">
         Devisi Media Rohis AL Hidayah © 2025 
       </div>
     </footer>
 
+
+    <script>
+    // Ganti config ini dengan milik kamu
+    const firebaseConfig = {
+  apiKey: "AIzaSyCvWEuEWHGG0D4JTE4MTdM067L5aKOdBIE",
+  authDomain: "komentarweb-a2c2c.firebaseapp.com",
+  databaseURL: "https://komentarweb-a2c2c-default-rtdb.firebaseio.com",
+  projectId: "komentarweb-a2c2c",
+  storageBucket: "komentarweb-a2c2c.firebasestorage.app",
+  messagingSenderId: "794739625384",
+  appId: "1:794739625384:web:a4787198b5ff50ca58219d",
+  measurementId: "G-TP289GEFG8"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const commentsDiv = document.querySelector(".comments");
+    const userComment = document.getElementById("usercomment");
+    const publishBtn = document.getElementById("publish");
+    const userName = document.getElementById("username");
+    const commentCount = document.getElementById("comment");
+
+    // Enable publish button jika input komentar ada isinya
+    userComment.addEventListener("input", () => {
+      if (userComment.value.trim()) {
+        publishBtn.removeAttribute("disabled");
+      } else {
+        publishBtn.setAttribute("disabled", "disabled");
+      }
+    });
+
+    // Simpan komentar ke Firebase Realtime Database
+    publishBtn.addEventListener("click", () => {
+      if (!userComment.value.trim()) return;
+
+      const newCommentRef = db.ref('comments').push();
+      newCommentRef.set({
+        name: userName.value.trim() || "Anonymous",
+        message: userComment.value.trim(),
+        date: Date.now()
+      });
+
+      userComment.value = "";
+      publishBtn.setAttribute("disabled", "disabled");
+    });
+
+    // Fungsi hapus komentar
+    function deleteComment(key) {
+      if (confirm("Are you sure you want to delete this comment?")) {
+        db.ref('comments/' + key).remove();
+      }
+    }
+
+    // Render komentar realtime
+    db.ref('comments').orderByChild('date').on('value', snapshot => {
+      const comments = snapshot.val();
+      commentsDiv.innerHTML = "";
+      let count = 0;
+      if (comments) {
+        const sortedComments = Object.entries(comments).sort((a, b) => b[1].date - a[1].date);
+        sortedComments.forEach(([key, cmt]) => {
+          const commentHtml = `
+            <div class="card mb-3">
+              <div class="card-body d-flex">
+                <img src="pp kosong.jpeg" alt="Profile Pic" class="rounded-circle me-3" style="width:50px; height:50px; object-fit:cover;" />
+                <div class="flex-grow-1">
+                  <h5 class="card-title mb-1">${cmt.name}</h5>
+                  <p class="card-text mb-1">${cmt.message}</p>
+                  <small class="text-muted">${new Date(cmt.date).toLocaleString()}</small>
+                </div>
+                <button class="btn btn-sm btn-danger ms-3" onclick="deleteComment('${key}')">Delete</button>
+              </div>
+            </div>
+          `;
+          commentsDiv.insertAdjacentHTML('beforeend', commentHtml);
+          count++;
+        });
+      }
+      commentCount.textContent = count;
+    });
+  </script>
     <script src="https://cdn.jsdelivr.net/npm/bs5-lightbox@1.8.3/dist/index.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bs5-lightbox@1.8.3/dist/index.bundle.min.js"></script>
